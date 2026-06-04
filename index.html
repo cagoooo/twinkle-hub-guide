@@ -19,6 +19,12 @@
 <meta property="og:url" content="https://cagoooo.github.io/twinkle-hub-guide/" />
 <meta name="twitter:card" content="summary_large_image" />
 
+<!-- Favicon / App Icons / PWA -->
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+
 <style>
   :root{
     --ink:#1f2430; --ink-soft:#525c72; --muted:#8a93a8;
@@ -535,6 +541,61 @@
       html+='<i style="top:'+top+'%;left:'+left+'%;font-size:'+size+'px;animation-delay:'+delay+'s">✦</i>';
     }
     box.innerHTML=html;
+  })();
+</script>
+
+<script>
+  // === Service Worker 註冊 + 版本更新通知 ===
+  (function(){
+    if(!('serviceWorker' in navigator)) return;
+    var APP_VERSION='2026.06.04-1';
+    var reloaded=false;
+
+    function showBar(waiting){
+      if(document.getElementById('tw-update-bar')) return;
+      var css=document.createElement('style');
+      css.textContent='#tw-update-bar{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;background:#1e1b4b;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 14px 34px -10px rgba(0,0,0,.55);font-family:system-ui,-apple-system,sans-serif;font-size:14.5px;max-width:calc(100vw - 28px);animation:twUp .35s ease}@keyframes twUp{from{opacity:0;transform:translate(-50%,18px)}to{opacity:1;transform:translate(-50%,0)}}#tw-update-bar button{cursor:pointer;border:none;border-radius:9px;font-weight:700;font-size:14px;font-family:inherit}#tw-update-go{background:linear-gradient(135deg,#fcd34d,#fb923c);color:#3b2a00;padding:8px 15px}#tw-update-x{background:transparent;color:#aeb6d4;padding:6px 9px;font-size:15px}';
+      document.head.appendChild(css);
+      var bar=document.createElement('div');
+      bar.id='tw-update-bar'; bar.setAttribute('role','status'); bar.setAttribute('aria-live','polite');
+      bar.innerHTML='<span>✦ 網站有新版本</span><button id="tw-update-go">重新整理載入</button><button id="tw-update-x" aria-label="關閉">✕</button>';
+      document.body.appendChild(bar);
+      document.getElementById('tw-update-x').onclick=function(){ bar.remove(); };
+      document.getElementById('tw-update-go').onclick=function(){
+        if(waiting){ waiting.postMessage({type:'SKIP_WAITING'}); }
+        else { location.reload(); }
+      };
+    }
+
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+      // 上次安裝好但未套用的新版
+      if(reg.waiting && navigator.serviceWorker.controller){ showBar(reg.waiting); }
+      // 偵測到新版安裝完成（且非首次安裝）→ 提示
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing; if(!nw) return;
+        nw.addEventListener('statechange',function(){
+          if(nw.state==='installed' && navigator.serviceWorker.controller){ showBar(reg.waiting||nw); }
+        });
+      });
+      // 每分鐘主動向伺服器確認是否有新 sw.js
+      setInterval(function(){ reg.update().catch(function(){}); }, 60000);
+    }).catch(function(){});
+
+    // 新版接手後重新載入一次（旗標防無限重整）
+    navigator.serviceWorker.addEventListener('controllerchange',function(){
+      if(reloaded) return; reloaded=true; location.reload();
+    });
+
+    // 備胎：版本檔輪詢（多重觸發點），萬一 SW 事件沒攔到也能提示
+    function checkVer(){
+      fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+        if(d && d.version && d.version!==APP_VERSION){ showBar(null); }
+      }).catch(function(){});
+    }
+    ['focus','online','pageshow'].forEach(function(ev){ window.addEventListener(ev,checkVer); });
+    document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkVer(); });
+    setTimeout(checkVer,8000);
+    setInterval(checkVer,180000);
   })();
 </script>
 </body>
