@@ -1,5 +1,7 @@
 # ✦ Twinkle Hub 教師指南
 
+> 📌 **建置版本：2026.06.04-1**（依據 `version.json`）
+
 把**台灣的官方資料**接進 AI 助教的認識與使用宣導網站，對象為**全校老師、學生與家長**。
 
 🌐 **線上網址**：https://cagoooo.github.io/twinkle-hub-guide/
