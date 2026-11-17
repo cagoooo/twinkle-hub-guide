@@ -2,7 +2,7 @@
  * 更新版本只需改 BUILD_VERSION（或跑 scripts/bump-version.ps1）。
  * sw.js 的 byte 一變，瀏覽器就會偵測為新版 → 觸發更新通知。
  */
-const BUILD_VERSION = '2026.06.04-1';
+const BUILD_VERSION = '2026.11.17-1';
 const CACHE = 'twinkle-hub-' + BUILD_VERSION;
 
 const PRECACHE = [
